@@ -44,6 +44,18 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: RearClouds
+    uniqueID: 2950056733
+    locked: 0
+  - name: Rockets
+    uniqueID: 1999613095
+    locked: 0
+  - name: FrontClouds
+    uniqueID: 938208853
+    locked: 0
+  - name: Rates
+    uniqueID: 1941262413
+    locked: 0
   - name: Controls
     uniqueID: 3884234283
     locked: 0

@@ -772,6 +772,11 @@ namespace CreateNeptune
                 GameObject newGO = Instantiate(gameObject);
                 newGO.layer = physicsLayer;
                 newGO.SetActive(false);
+
+                // Make sure list is instantiated.
+                if (gameObjectList == null)
+                    gameObjectList = new List<GameObject>();
+
                 gameObjectList.Add(newGO);
             }
         }
