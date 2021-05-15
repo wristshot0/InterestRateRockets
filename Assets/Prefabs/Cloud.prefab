@@ -97,6 +97,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5014cff606e7f4340878bc6967eb9730, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cloudSprites:
+  - {fileID: 21300000, guid: 121a693b0d2cc43a094b3f7b0ed8ad7f, type: 3}
+  - {fileID: 21300000, guid: fb29382663909461fa427b9f613ffc35, type: 3}
+  - {fileID: 21300000, guid: eef586a5fd0bf40f9b60dd332d7ec411, type: 3}
+  - {fileID: 21300000, guid: 1d80ff4ca2bba4095899eb1f8a99cd73, type: 3}
   minScale: {x: 0.22, y: 0.22}
   maxScale: {x: 0.28, y: 0.28}
   minTime: 2

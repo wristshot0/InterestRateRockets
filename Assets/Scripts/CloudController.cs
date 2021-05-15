@@ -6,7 +6,9 @@ using CreateNeptune;
 public class CloudController : MonoBehaviour
 {
     private Transform t;
+    private SpriteRenderer sr;
 
+    [SerializeField] private Sprite[] cloudSprites;
     [SerializeField] private Vector2 minScale;
     [SerializeField] private Vector2 maxScale;
     [SerializeField] private float minTime;
@@ -17,10 +19,14 @@ public class CloudController : MonoBehaviour
     private void Awake()
     {
         t = transform;
+        sr = GetComponent<SpriteRenderer>();
     }
 
     private void OnEnable()
     {
+        // Pick cloud sprite.
+        sr.sprite = cloudSprites[Random.Range(0, cloudSprites.Length)];
+
         StartCoroutine(ScaleCloud());
     }
 

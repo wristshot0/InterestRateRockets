@@ -5,6 +5,13 @@ using CreateNeptune;
 
 public class GameManager : MonoBehaviour
 {
+    // Rocket movement
+    [SerializeField] private bool phoneTesting;
+    private bool playerTouching;
+    public float acceleration;
+    public float maxVelocityAdder;
+    public float currentVelocityAdder;
+
     public Sprite[] rocketSprites;
     [SerializeField] private GameObject rocket;
     [SerializeField] private GameObject cloud;
@@ -15,6 +22,13 @@ public class GameManager : MonoBehaviour
 
     private LayerMask defaultLayer;
     private LayerMask uiLayer;
+
+    private GameState gameState = GameState.pregame;
+
+    private enum GameState
+    {
+        pregame, gameplay, endgame
+    }
 
     private void Awake()
     {
@@ -59,6 +73,62 @@ public class GameManager : MonoBehaviour
             }
 
             yield return new WaitForSeconds(2f);
+        }
+    }
+
+    private void Update()
+    {
+        if (gameState == GameState.gameplay)
+        {
+            GetInput();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (playerTouching)
+        {
+            // Increase velocity applied to all rockets
+            currentVelocityAdder = Mathf.Min(maxVelocityAdder, currentVelocityAdder + acceleration);
+        }
+    }
+
+    private void GetInput()
+    {
+#if UNITY_EDITOR
+        if (!phoneTesting)
+        {
+            playerTouching = Input.anyKeyDown;
+        }
+#endif
+
+        if (Input.touchCount > 0)
+        {
+            // Get the first touch
+            Touch touch = Input.GetTouch(0);
+
+            switch (touch.phase)
+            {
+                case TouchPhase.Began:
+                    playerTouching = true;
+                    break;
+                case TouchPhase.Moved:
+                    playerTouching = true;
+                    break;
+                case TouchPhase.Stationary:
+                    playerTouching = true;
+                    break;
+                case TouchPhase.Canceled:
+                    playerTouching = false;
+                    break;
+                case TouchPhase.Ended:
+                    playerTouching = false;
+                    break;
+            }
+        }
+        else
+        {
+            playerTouching = false;
         }
     }
 }
