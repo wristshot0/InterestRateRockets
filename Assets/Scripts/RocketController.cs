@@ -21,6 +21,9 @@ public class RocketController : MonoBehaviour
 
     private void Awake()
     {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
         t = transform;
         rb = GetComponent<Rigidbody2D>();
     }
