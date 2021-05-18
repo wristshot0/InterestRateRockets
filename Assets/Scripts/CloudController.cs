@@ -7,8 +7,7 @@ public class CloudController : MonoBehaviour
 {
     private Transform t;
     private SpriteRenderer sr;
-
-    [SerializeField] private Sprite[] cloudSprites;
+    
     [SerializeField] private Vector2 minScale;
     [SerializeField] private Vector2 maxScale;
     [SerializeField] private float minTime;
@@ -24,8 +23,17 @@ public class CloudController : MonoBehaviour
 
     private void OnEnable()
     {
-        // Pick cloud sprite.
-        sr.sprite = cloudSprites[Random.Range(0, cloudSprites.Length)];
+        // Front clouds less opacity
+        if (Random.Range(0, 2) == 0)
+        {
+            sr.color = new Color(1f, 1f, 1f, Random.Range(0.15f, 0.35f));
+            sr.sortingLayerName = "FrontClouds";
+        }
+        else
+        {
+            sr.color = new Color(1f, 1f, 1f, Random.Range(0.15f, 1f));
+            sr.sortingLayerName = "RearClouds";
+        }
 
         StartCoroutine(ScaleCloud());
     }

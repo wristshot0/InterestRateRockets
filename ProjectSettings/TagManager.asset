@@ -3,7 +3,9 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - gm
+  - atmosphere
   layers:
   - Default
   - TransparentFX
@@ -58,4 +60,7 @@ TagManager:
     locked: 0
   - name: Controls
     uniqueID: 3884234283
+    locked: 0
+  - name: UI
+    uniqueID: 2011460297
     locked: 0
