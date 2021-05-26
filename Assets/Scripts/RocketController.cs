@@ -7,12 +7,18 @@ public class RocketController : MonoBehaviour
     private GameManager gm;
     private Transform t;
     private Rigidbody2D rb;
+    private AudioSource audioSource;
 
     public float speed;
     [SerializeField] private float deathSpeed;
     [SerializeField] private float atmosphericSlowdown;
     
     private bool enteredAtmosphere = false;
+
+    // Audio clips
+    [SerializeField] private AudioClip rocketSound;
+    [SerializeField] private AudioClip failSound;
+    [SerializeField] private AudioClip successSound;
 
     private enum RocketState
     {
@@ -26,12 +32,16 @@ public class RocketController : MonoBehaviour
 
         t = transform;
         rb = GetComponent<Rigidbody2D>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
     {
         // Reset.
         enteredAtmosphere = false;
+
+        // Play rocket sound.
+        audioSource.PlayOneShot(rocketSound);
     }
 
     private void Start()
@@ -68,6 +78,9 @@ public class RocketController : MonoBehaviour
             gm.hotStreak++;
             gm.launches++;
             gm.launchText.text = gm.launches.ToString();
+
+            // Play success sound.
+            audioSource.PlayOneShot(successSound);
         }
         else
         {
@@ -89,6 +102,9 @@ public class RocketController : MonoBehaviour
 
                 gm.EndGame();
             }
+
+            // Play failure sound.
+            audioSource.PlayOneShot(failSound);
         }
 
         gm.CheckHotStreak();

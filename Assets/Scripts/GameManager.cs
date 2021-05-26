@@ -14,7 +14,6 @@ public class GameManager : MonoBehaviour
     public int hotStreak = 0;
     public int gameEndingCrashes;
     [SerializeField] private Canvas gpsCanvas;
-    [SerializeField] private float hotStreakSpeedMultiplier;
     public TextMeshPro hotStreakText;
     public Text launchText;
     public Text crashText;
@@ -22,24 +21,25 @@ public class GameManager : MonoBehaviour
 
     // Rocket movement
     [SerializeField] private bool phoneTesting;
-    public bool playerTouching;
+    [SerializeField] private float timeBetweenRocketLaunches;
     private float rocketSpeed;
     [SerializeField] private float minRocketSpeed;
-    private float currentSpeedMultiplier = 1f;
+    [SerializeField] private float maxRocketSpeed;
     [SerializeField] private float rocketSpeedIncrement;
-    [SerializeField] private float timeBetweenRocketLaunches;
+    [SerializeField] private float hotStreakSpeedMultiplier;
+    private float currentSpeedMultiplier = 1f;
+    [SerializeField] private float minSpeedToClearAtmosphere;
 
     // Rates that alter acceleration and deceleration characteristics of rockets
     public float ffr;
-    public float risk;
-    [SerializeField] private float riskErrorBuffer;
-    [SerializeField] private float riskPerSecond;
+    [SerializeField] private float decelerationMultiplier;
     [SerializeField] private float timeBetweenRateChanges;
-    private float maxRisk = 1f;
     [SerializeField] private float maxFFR;
     [SerializeField] private Text ffrText;
     [SerializeField] private Image interestRateWell;
-    [SerializeField] private Image riskFill;
+    [SerializeField] private Image returnsFill;
+    [SerializeField] private GameObject[] securityGlows;
+    private IEnumerator flashSecurity;
 
     // Thruster
     [SerializeField] private RectTransform upperThruster;
@@ -92,6 +92,10 @@ public class GameManager : MonoBehaviour
         // Start at minimum rocket speed.
         rocketSpeed = minRocketSpeed;
 
+        // Start with TSLA investment suggestion.
+        flashSecurity = FlashSecurity(2);
+        StartCoroutine(flashSecurity);
+
         StartCoroutine(BeginGame());
         StartCoroutine(GenerateClouds());
         StartCoroutine(GenerateRockets());
@@ -123,9 +127,6 @@ public class GameManager : MonoBehaviour
                 SpriteRenderer sr = newRocket.transform.GetChild(0).GetComponent<SpriteRenderer>();
                 rc.speed = rocketSpeed * (1 + currentSpeedMultiplier);
                 sr.sprite = rocketSprites[Random.Range(0, rocketSprites.Length)];
-
-                // Increase rocket speed each round.
-                IncreaseRocketSpeed();
             }
             else if (gameState == GameState.endgame)
                 yield break;
@@ -148,63 +149,27 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (gameState == GameState.gameplay)
-        {
-            GetInput();
-        }
-
         AdjustControls();
+
+        NaturalRocketSpeedErosion();
+    }
+
+    private void NaturalRocketSpeedErosion()
+    {
+        DecreaseRocketSpeed(rocketSpeedIncrement * 0.25f);
     }
 
     private void AdjustControls()
     {
-        if (playerTouching)
-            risk = Mathf.Min(risk + riskPerSecond * Time.deltaTime, maxRisk);
-        else
-            risk = Mathf.Max(risk - riskPerSecond * Time.deltaTime, 0f);
+        float speedRatio = rocketSpeed / maxRocketSpeed;
 
         upperThruster.anchoredPosition = new Vector2(upperThruster.anchoredPosition.x,
-            (maxUpperThrusterY - minUpperThrusterY) * risk + minUpperThrusterY);
+            (maxUpperThrusterY - minUpperThrusterY) * speedRatio + minUpperThrusterY);
         lowerThruster.anchoredPosition = new Vector2(lowerThruster.anchoredPosition.x,
-            (maxLowerThrusterY - minLowerThrusterY) * risk + minLowerThrusterY);
+            (maxLowerThrusterY - minLowerThrusterY) * speedRatio + minLowerThrusterY);
 
-        riskFill.fillAmount = risk;
-        riskFill.color = Color.HSVToRGB(risk * 0.333f, 1f, 1f);
-    }
-
-    private void GetInput()
-    {
-#if UNITY_EDITOR
-        if (!phoneTesting)
-        {
-            playerTouching = Input.anyKey;
-        }
-#endif
-
-        if (Input.touchCount > 0)
-        {
-            // Get the first touch
-            Touch touch = Input.GetTouch(0);
-
-            switch (touch.phase)
-            {
-                case TouchPhase.Began:
-                    playerTouching = true;
-                    break;
-                case TouchPhase.Moved:
-                    playerTouching = true;
-                    break;
-                case TouchPhase.Stationary:
-                    playerTouching = true;
-                    break;
-                case TouchPhase.Canceled:
-                    playerTouching = false;
-                    break;
-                case TouchPhase.Ended:
-                    playerTouching = false;
-                    break;
-            }
-        }
+        returnsFill.fillAmount = speedRatio;
+        returnsFill.color = Color.HSVToRGB(speedRatio * 0.333f, 1f, 1f);
     }
 
     private void ChangeFFR(float newFFR)
@@ -212,15 +177,46 @@ public class GameManager : MonoBehaviour
         ffr = Mathf.Max(0f, Mathf.Min(newFFR, maxFFR));
         ffrText.text = (ffr * 100).ToString("0.0") + "%";
         interestRateWell.color = Color.HSVToRGB((1f - ffr / maxFFR) * 0.333f, 1f, 1f);
+
+        // Flash glow on correct security to choose.
+        if (flashSecurity != null)
+            StopCoroutine(flashSecurity);
+
+        if (ffr < maxFFR / 3f)
+        {
+            flashSecurity = FlashSecurity(2);
+            StartCoroutine(flashSecurity);
+        }
+        else if (ffr < maxFFR * 2f / 3f)
+        {
+            flashSecurity = FlashSecurity(1);
+            StartCoroutine(flashSecurity);
+        }
+        else
+        {
+            flashSecurity = FlashSecurity(0);
+            StartCoroutine(flashSecurity);
+        }
+    }
+
+    private IEnumerator FlashSecurity(int numSecurity)
+    {
+        Color realClear = new Color(1f, 1f, 1f, 0f);
+
+        foreach (GameObject securityGlow in securityGlows)
+        {
+            securityGlow.GetComponent<Image>().color = realClear;
+        }
+
+        for (; ;)
+        {
+            yield return MPAction.FlashAnimation(securityGlows[numSecurity], 0.5f, 2f, realClear, Color.white, false, false, false);
+        }
     }
 
     public bool ShouldClearAtmosphere()
     {
-        float riskTaken = risk * maxFFR;
-        float minBound = (maxFFR - ffr) - riskErrorBuffer;
-        float maxBound = (maxFFR - ffr) + riskErrorBuffer;
-
-        if (riskTaken > minBound && riskTaken < maxBound)
+        if (rocketSpeed > minSpeedToClearAtmosphere)
             return true;
 
         return false;
@@ -240,9 +236,31 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void CheckSecurityChoice(int securityChoice)
+    {
+        float lowFFR = maxFFR / 3f;
+        float highFFR = maxFFR * 2f / 3f;
+
+        // If FFR is low and an aggressive choice is made, increase speed; etc.
+        if ((ffr < lowFFR && securityChoice == 2) || (ffr > lowFFR && ffr < highFFR && securityChoice == 1)
+            || (ffr > highFFR && securityChoice == 0))
+        {
+            IncreaseRocketSpeed();
+        }
+        else
+        {
+            DecreaseRocketSpeed(decelerationMultiplier);
+        }
+    }
+
     private void IncreaseRocketSpeed()
     {
-        rocketSpeed += rocketSpeedIncrement;
+        rocketSpeed = Mathf.Min(rocketSpeed + rocketSpeedIncrement, maxRocketSpeed);
+    }
+
+    private void DecreaseRocketSpeed(float speedLossMultiplier)
+    {
+        rocketSpeed = Mathf.Max(rocketSpeed - speedLossMultiplier * rocketSpeedIncrement, minRocketSpeed);
     }
 
     private IEnumerator GenerateClouds()
